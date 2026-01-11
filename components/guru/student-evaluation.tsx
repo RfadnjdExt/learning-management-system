@@ -126,9 +126,12 @@ export function StudentEvaluation({
     }
   }
 
+  // State for list
+  const [evaluations, setEvaluations] = useState<any[]>([])
+
   async function fetchClassData(classId: string) {
     try {
-      const [studentsRes, sessionsRes] = await Promise.all([
+      const [studentsRes, sessionsRes, evalsRes] = await Promise.all([
         supabase
           .from("class_enrollments")
           .select("user:users(*)")
@@ -138,16 +141,32 @@ export function StudentEvaluation({
           .select("*")
           .eq("class_id", classId)
           .order("session_date", { ascending: false }),
+        supabase
+          .from("evaluations")
+          .select("*, user:users(full_name), session:sessions(session_date)")
+          .eq("evaluator_id", guruId)
+          .order("created_at", { ascending: false })
+          .limit(20) // Limit loading
       ])
 
       if (studentsRes.error) throw studentsRes.error
       if (sessionsRes.error) throw sessionsRes.error
+      // Note: evalsRes might need filtering by class if we want to be strict, 
+      // but simple RLS + order is distinct enough for now or we filter client side if needed.
+      // Ideally we filter by sessions in this class.
 
       const loadedStudents = studentsRes.data?.map((e: any) => e.user) || []
       const loadedSessions = sessionsRes.data || []
 
       setStudents(loadedStudents)
       setSessions(loadedSessions)
+
+      if (evalsRes.data) {
+        // Filter evaluations that belong to sessions of this class
+        const sessionIds = loadedSessions.map((s: any) => s.id)
+        const classEvals = evalsRes.data.filter((e: any) => sessionIds.includes(e.session_id))
+        setEvaluations(classEvals)
+      }
 
       // Calculate Full Sessions
       if (loadedStudents.length > 0 && loadedSessions.length > 0) {
@@ -218,20 +237,21 @@ export function StudentEvaluation({
 
       toast.success("Evaluasi berhasil disimpan")
 
-      // Refresh the list of evaluated students immediately
-      if (selectedSession) {
-        await fetchEvaluatedStudents(selectedSession)
-      }
+      // Refresh data
+      if (selectedClass) fetchClassData(selectedClass)
+      if (selectedSession) fetchEvaluatedStudents(selectedSession)
 
-      // Reset form but KEEP the session selected for easier bulk entry
+      // Close dialog for standard flow
+      setIsDialogOpen(false)
+
+      // Reset form
       setEvalFormData({
-        template_id: evalFormData.template_id, // Keep template for speed
+        template_id: evalFormData.template_id,
         tajweed_level: "",
         hafalan_level: "",
         tartil_level: "",
         additional_notes: "",
       })
-      // Don't close dialog, just reset student
       setSelectedStudent(null)
 
     } catch (err: any) {
@@ -439,10 +459,30 @@ export function StudentEvaluation({
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="text-center py-10 text-muted-foreground">
-                    Pilih "Tambah Evaluasi" untuk mulai menilai hafalan santri.
-                    <br />
-                    (Daftar riwayat evaluasi akan muncul di sini nanti)
+                  {/* List Content */}
+                  <div className="space-y-4">
+                    {evaluations.length === 0 ? (
+                      <div className="text-center py-10 text-muted-foreground">
+                        Belum ada riwayat evaluasi di kelas ini.
+                      </div>
+                    ) : (
+                      <div className="grid gap-3">
+                        {evaluations.map((ev) => (
+                          <div key={ev.id} className="flex justify-between items-start border p-3 rounded-lg bg-card text-card-foreground shadow-sm">
+                            <div>
+                              <div className="font-semibold">{ev.user?.full_name}</div>
+                              <div className="text-sm text-muted-foreground">
+                                {new Date(ev.session?.session_date).toLocaleDateString("id-ID")}
+                              </div>
+                            </div>
+                            <div className="text-right text-xs space-y-1">
+                              {ev.hafalan_level && <div className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded">Hafil: {ev.hafalan_level.replace(/_/g, " ")}</div>}
+                              {ev.tajweed_level && <div className="bg-green-100 text-green-800 px-2 py-0.5 rounded">Tajwid: {ev.tajweed_level.replace(/_/g, " ")}</div>}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
