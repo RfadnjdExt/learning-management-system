@@ -143,7 +143,7 @@ export function StudentEvaluation({
           .order("session_date", { ascending: false }),
         supabase
           .from("evaluations")
-          .select("*, user:users(full_name), session:sessions(session_date)")
+          .select("*, user:users!evaluations_user_id_fkey(full_name), session:sessions(session_date)")
           .eq("evaluator_id", guruId)
           .order("created_at", { ascending: false })
           .limit(20) // Limit loading
