@@ -1,19 +1,32 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useEffect } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Plus, Trash2 } from "lucide-react"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import { toast } from "sonner"
 
 export function SessionManagement({ guruId, institutionId }: { guruId: string; institutionId: string }) {
   const [sessions, setSessions] = useState<any[]>([])
   const [classes, setClasses] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [showForm, setShowForm] = useState(false)
+
+  // Dialog State
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+
   const [formData, setFormData] = useState({
     class_id: "",
     session_date: "",
@@ -46,7 +59,10 @@ export function SessionManagement({ guruId, institutionId }: { guruId: string; i
   async function handleAddSession(e: React.FormEvent) {
     e.preventDefault()
 
-    if (!formData.class_id || !formData.session_date) return
+    if (!formData.class_id || !formData.session_date) {
+      toast.error("Kelas dan Tanggal wajib diisi")
+      return
+    }
 
     const { error } = await supabase.from("sessions").insert({
       guru_id: guruId,
@@ -54,9 +70,12 @@ export function SessionManagement({ guruId, institutionId }: { guruId: string; i
     })
 
     if (!error) {
+      toast.success("Sesi berhasil dibuat!")
       setFormData({ class_id: "", session_date: "", start_time: "", end_time: "", notes: "" })
-      setShowForm(false)
+      setIsDialogOpen(false)
       fetchData()
+    } else {
+      toast.error("Gagal membuat sesi: " + error.message)
     }
   }
 
@@ -77,69 +96,92 @@ export function SessionManagement({ guruId, institutionId }: { guruId: string; i
             <CardTitle>Sesi Pembelajaran</CardTitle>
             <CardDescription>Buat dan kelola sesi mengajar Anda</CardDescription>
           </div>
-          <Button onClick={() => setShowForm(!showForm)} size="sm">
-            <Plus className="w-4 h-4 mr-2" />
-            Sesi Baru
-          </Button>
+
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm">
+                <Plus className="w-4 h-4 mr-2" />
+                Sesi Baru
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Buat Sesi Baru</DialogTitle>
+                <DialogDescription>
+                  Jadwalkan atau catat sesi pertemuan kelas.
+                </DialogDescription>
+              </DialogHeader>
+              <form onSubmit={handleAddSession} className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Pilih Kelas</Label>
+                  <select
+                    value={formData.class_id}
+                    onChange={(e) => setFormData({ ...formData, class_id: e.target.value })}
+                    className="w-full px-3 py-2 border border-input rounded-md bg-background"
+                    required
+                  >
+                    <option value="">-- Pilih Kelas --</option>
+                    {classes.map((cls) => (
+                      <option key={cls.id} value={cls.id}>
+                        {cls.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Tanggal</Label>
+                  <Input
+                    type="date"
+                    value={formData.session_date}
+                    onChange={(e) => setFormData({ ...formData, session_date: e.target.value })}
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-2">
+                    <Label>Waktu Mulai</Label>
+                    <Input
+                      type="time"
+                      value={formData.start_time}
+                      onChange={(e) => setFormData({ ...formData, start_time: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Waktu Selesai</Label>
+                    <Input
+                      type="time"
+                      value={formData.end_time}
+                      onChange={(e) => setFormData({ ...formData, end_time: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Catatan</Label>
+                  <Input
+                    placeholder="Catatan (opsional)"
+                    value={formData.notes}
+                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                  />
+                </div>
+
+                <DialogFooter>
+                  <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                    Batal
+                  </Button>
+                  <Button type="submit">Buat Sesi</Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {showForm && (
-          <form onSubmit={handleAddSession} className="space-y-4 p-4 bg-muted rounded-lg">
-            <select
-              value={formData.class_id}
-              onChange={(e) => setFormData({ ...formData, class_id: e.target.value })}
-              className="w-full px-3 py-2 border border-input rounded-md bg-background"
-              required
-            >
-              <option value="">Pilih Kelas</option>
-              {classes.map((cls) => (
-                <option key={cls.id} value={cls.id}>
-                  {cls.name}
-                </option>
-              ))}
-            </select>
-
-            <Input
-              type="date"
-              value={formData.session_date}
-              onChange={(e) => setFormData({ ...formData, session_date: e.target.value })}
-              required
-            />
-
-            <div className="grid grid-cols-2 gap-2">
-              <Input
-                type="time"
-                value={formData.start_time}
-                onChange={(e) => setFormData({ ...formData, start_time: e.target.value })}
-                placeholder="Waktu Mulai"
-              />
-              <Input
-                type="time"
-                value={formData.end_time}
-                onChange={(e) => setFormData({ ...formData, end_time: e.target.value })}
-                placeholder="Waktu Selesai"
-              />
-            </div>
-
-            <Input
-              placeholder="Catatan (opsional)"
-              value={formData.notes}
-              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-            />
-
-            <div className="flex gap-2">
-              <Button type="submit">Buat Sesi</Button>
-              <Button type="button" variant="outline" onClick={() => setShowForm(false)}>
-                Batal
-              </Button>
-            </div>
-          </form>
-        )}
-
         <div className="space-y-2">
           {sessions.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Belum ada sesi dibuat</p>
+            <p className="text-sm text-muted-foreground text-center py-8">Belum ada sesi dibuat</p>
           ) : (
             sessions.map((session) => (
               <Card key={session.id} className="p-4">
@@ -147,7 +189,7 @@ export function SessionManagement({ guruId, institutionId }: { guruId: string; i
                   <div className="flex-1">
                     <p className="font-medium">{session.class?.name}</p>
                     <p className="text-sm text-muted-foreground">
-                      {new Date(session.session_date).toLocaleDateString()} {session.start_time || ""} -{" "}
+                      {new Date(session.session_date).toLocaleDateString("id-ID")} • {session.start_time || ""} -{" "}
                       {session.end_time || ""}
                     </p>
                     {session.notes && <p className="text-sm mt-2">{session.notes}</p>}

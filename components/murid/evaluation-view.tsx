@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import type React from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -26,9 +25,10 @@ export function EvaluationView({ userId }: { userId: string }) {
   }, [evaluations, searchTerm, filterLevel, sortBy])
 
   async function fetchEvaluations() {
+    // FIX: Use explicit foreign key !evaluator_id to avoid ambiguity
     const { data } = await supabase
       .from("evaluations")
-      .select("*, session:sessions(session_date), guru:users(full_name)")
+      .select("*, session:sessions(session_date), guru:users!evaluator_id(full_name)")
       .eq("user_id", userId)
       .order("created_at", { ascending: false })
 
@@ -39,12 +39,13 @@ export function EvaluationView({ userId }: { userId: string }) {
   function applyFiltersAndSort() {
     let filtered = [...evaluations]
 
-    // Apply search filter
+    // Apply search filter (Safe check)
     if (searchTerm) {
+      const lowerSearch = searchTerm.toLowerCase()
       filtered = filtered.filter(
         (evaluation) =>
-          evaluation.guru?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          evaluation.additional_notes?.toLowerCase().includes(searchTerm.toLowerCase()),
+          (evaluation.guru?.full_name || "").toLowerCase().includes(lowerSearch) ||
+          (evaluation.additional_notes || "").toLowerCase().includes(lowerSearch),
       )
     }
 
@@ -130,8 +131,8 @@ export function EvaluationView({ userId }: { userId: string }) {
               <CardHeader className="pb-3">
                 <div className="flex justify-between items-start">
                   <div>
-                    <CardTitle className="text-base">{evaluation.guru?.full_name}</CardTitle>
-                    <CardDescription>{new Date(evaluation.session?.session_date).toLocaleDateString()}</CardDescription>
+                    <CardTitle className="text-base">{evaluation.guru?.full_name || "Guru Tidak Dikenal"}</CardTitle>
+                    <CardDescription>{new Date(evaluation.session?.session_date).toLocaleDateString("id-ID")}</CardDescription>
                   </div>
                 </div>
               </CardHeader>

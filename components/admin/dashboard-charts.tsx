@@ -1,7 +1,7 @@
 "use client"
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid, PieChart, Pie, Cell } from "recharts"
+import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, PieChart, Pie, Cell } from "recharts"
 
 export function DashboardCharts() {
     // Mock data - in a real app this would come from the database
@@ -10,23 +10,23 @@ export function DashboardCharts() {
         { name: "Feb", total: 18 },
         { name: "Mar", total: 25 },
         { name: "Apr", total: 45 },
-        { name: "May", total: 32 },
+        { name: "Mei", total: 32 },
         { name: "Jun", total: 58 },
     ]
 
     const userRoleData = [
-        { name: "Students", value: 450, color: "var(--color-primary)" },
-        { name: "Teachers", value: 32, color: "var(--color-chart-2)" },
-        { name: "Admins", value: 5, color: "var(--color-chart-3)" },
+        { name: "Santri", value: 450, color: "var(--color-primary)" },
+        { name: "Ustadz", value: 32, color: "var(--color-chart-2)" },
+        { name: "Admin", value: 5, color: "var(--color-chart-3)" },
     ]
 
     return (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
             <Card className="col-span-4">
                 <CardHeader>
-                    <CardTitle>Registration Overview</CardTitle>
+                    <CardTitle>Statistik Pendaftaran</CardTitle>
                     <CardDescription>
-                        New students registered per month (Last 6 months)
+                        Santri baru terdaftar per bulan (6 bulan terakhir)
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="pl-2">
@@ -62,9 +62,9 @@ export function DashboardCharts() {
 
             <Card className="col-span-3">
                 <CardHeader>
-                    <CardTitle>User Distribution</CardTitle>
+                    <CardTitle>Sebaran Pengguna</CardTitle>
                     <CardDescription>
-                        Active users by role
+                        Pengguna aktif berdasarkan peran
                     </CardDescription>
                 </CardHeader>
                 <CardContent>

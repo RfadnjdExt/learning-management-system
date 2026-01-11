@@ -2,12 +2,15 @@ import { getCurrentUserWithRole } from "@/lib/auth-utils"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { LogOut, LayoutDashboard, BookOpen, FileText, User } from "lucide-react"
+import { redirect } from "next/navigation"
+import { createClient } from "@/lib/supabase/server"
 
 async function LogoutButton() {
   async function handleLogout() {
     "use server"
-    const supabase = await import("@/lib/supabase/server").then((m) => m.createClient())
+    const supabase = await createClient()
     await supabase.auth.signOut()
+    redirect("/auth/login")
   }
 
   return (
@@ -24,7 +27,7 @@ export async function MuridSidebar() {
   const { userData } = await getCurrentUserWithRole()
 
   return (
-    <div className="w-64 border-r border-border bg-sidebar flex flex-col h-screen">
+    <div className="w-64 border-r border-border bg-sidebar flex flex-col h-screen sticky top-0">
       <div className="p-6 border-b border-sidebar-border">
         <Link href="/" className="block hover:opacity-80 transition-opacity">
           <h1 className="text-xl font-bold text-sidebar-foreground">Mutabaah</h1>

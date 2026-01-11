@@ -75,7 +75,7 @@ export function AdminDashboardContent({ institutionId }: { institutionId: string
                         </span>
                       </td>
                       <td className="py-2 px-4 text-muted-foreground">
-                        {new Date(user.created_at).toLocaleDateString()}
+                        {new Date(user.created_at).toLocaleDateString("id-ID")}
                       </td>
                     </tr>
                   ))}
@@ -108,7 +108,7 @@ export function AdminDashboardContent({ institutionId }: { institutionId: string
                       <td className="py-2 px-4 font-medium">{cls.name}</td>
                       <td className="py-2 px-4">{cls.guru?.full_name || "—"}</td>
                       <td className="py-2 px-4 text-muted-foreground">
-                        {new Date(cls.created_at).toLocaleDateString()}
+                        {new Date(cls.created_at).toLocaleDateString("id-ID")}
                       </td>
                     </tr>
                   ))}

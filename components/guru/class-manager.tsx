@@ -8,6 +8,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ArrowLeft, Plus, Calendar, Users, BookOpen } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+    DialogFooter,
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { toast } from "sonner"
 
 interface ClassManagerProps {
     classId: string
@@ -19,47 +31,75 @@ export function ClassManager({ classId, guruId }: ClassManagerProps) {
     const [students, setStudents] = useState<any[]>([])
     const [sessions, setSessions] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
+
+    // New Session State
+    const [isCreateOpen, setIsCreateOpen] = useState(false)
+    const [newSessionData, setNewSessionData] = useState({ date: "", notes: "" })
+
     const supabase = createClient()
     const router = useRouter()
 
     useEffect(() => {
-        async function fetchData() {
-            // 1. Fetch Class Details
-            const { data: cls } = await supabase
-                .from("classes")
-                .select("*, semester:semesters(name)")
-                .eq("id", classId)
-                .single()
+        fetchData()
+    }, [classId])
 
-            if (cls) setClassData(cls)
+    async function fetchData() {
+        // 1. Fetch Class Details
+        const { data: cls } = await supabase
+            .from("classes")
+            .select("*, semester:semesters(name)")
+            .eq("id", classId)
+            .single()
 
-            // 2. Fetch Students (via Enrollments)
-            // Note: We use the explicit !user_id FK if needed, but for enrollments user_id is the standard FK to users.
-            const { data: enrollmentData } = await supabase
-                .from("class_enrollments")
-                .select("*, user:users(id, full_name, phone, address)")
-                .eq("class_id", classId)
+        if (cls) setClassData(cls)
 
-            if (enrollmentData) {
-                setStudents(enrollmentData.map((e: any) => e.user).filter(Boolean))
-            }
+        // 2. Fetch Students (via Enrollments)
+        const { data: enrollmentData } = await supabase
+            .from("class_enrollments")
+            .select("*, user:users(id, full_name, phone, address)")
+            .eq("class_id", classId)
 
-            // 3. Fetch Sessions
-            const { data: sessionData } = await supabase
-                .from("sessions")
-                .select("*")
-                .eq("class_id", classId)
-                .order("session_date", { ascending: false })
-
-            if (sessionData) {
-                setSessions(sessionData)
-            }
-
-            setLoading(false)
+        if (enrollmentData) {
+            setStudents(enrollmentData.map((e: any) => e.user).filter(Boolean))
         }
 
-        fetchData()
-    }, [classId, supabase])
+        // 3. Fetch Sessions
+        const { data: sessionData } = await supabase
+            .from("sessions")
+            .select("*")
+            .eq("class_id", classId)
+            .order("session_date", { ascending: false })
+
+        if (sessionData) {
+            setSessions(sessionData)
+        }
+
+        setLoading(false)
+    }
+
+    async function handleCreateSession(e: React.FormEvent) {
+        e.preventDefault()
+        if (!newSessionData.date) {
+            toast.error("Tanggal wajib diisi")
+            return
+        }
+
+        const { error } = await supabase.from("sessions").insert({
+            class_id: classId,
+            guru_id: guruId,
+            session_date: newSessionData.date,
+            notes: newSessionData.notes
+        })
+
+        if (error) {
+            toast.error("Gagal membuat sesi: " + error.message)
+        } else {
+            toast.success("Sesi berhasil dibuat!")
+            setIsCreateOpen(false)
+            setNewSessionData({ date: "", notes: "" })
+            fetchData() // Refresh list
+        }
+    }
 
     if (loading) return <div className="p-8 text-center">Memuat data kelas...</div>
     if (!classData) return <div className="p-8 text-center text-red-500">Kelas tidak ditemukan</div>
@@ -100,10 +140,50 @@ export function ClassManager({ classId, guruId }: ClassManagerProps) {
                                     <h3 className="font-semibold">Kelola Sesi</h3>
                                     <p className="text-sm text-muted-foreground">Catat kehadiran dan nilai hafalan</p>
                                 </div>
-                                <Button>
-                                    <Plus className="mr-2 h-4 w-4" />
-                                    Buat Sesi Baru
-                                </Button>
+
+                                <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+                                    <DialogTrigger asChild>
+                                        <Button>
+                                            <Plus className="mr-2 h-4 w-4" />
+                                            Buat Sesi Baru
+                                        </Button>
+                                    </DialogTrigger>
+                                    <DialogContent>
+                                        <DialogHeader>
+                                            <DialogTitle>Buat Sesi Baru</DialogTitle>
+                                            <DialogDescription>
+                                                Pilih tanggal untuk sesi pembelajaran ini.
+                                            </DialogDescription>
+                                        </DialogHeader>
+                                        <form onSubmit={handleCreateSession} className="space-y-4">
+                                            <div className="space-y-2">
+                                                <Label htmlFor="date">Tanggal</Label>
+                                                <Input
+                                                    id="date"
+                                                    type="date"
+                                                    value={newSessionData.date}
+                                                    onChange={(e) => setNewSessionData({ ...newSessionData, date: e.target.value })}
+                                                    required
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label htmlFor="notes">Catatan (Opsional)</Label>
+                                                <Input
+                                                    id="notes"
+                                                    placeholder="Contoh: Setoran Surat An-Naba"
+                                                    value={newSessionData.notes}
+                                                    onChange={(e) => setNewSessionData({ ...newSessionData, notes: e.target.value })}
+                                                />
+                                            </div>
+                                            <DialogFooter>
+                                                <Button type="button" variant="outline" onClick={() => setIsCreateOpen(false)}>
+                                                    Batal
+                                                </Button>
+                                                <Button type="submit">Simpan</Button>
+                                            </DialogFooter>
+                                        </form>
+                                    </DialogContent>
+                                </Dialog>
                             </div>
 
                             <div className="space-y-3">
@@ -126,7 +206,10 @@ export function ClassManager({ classId, guruId }: ClassManagerProps) {
                                                         </p>
                                                     </div>
                                                 </div>
-                                                <Button variant="outline" size="sm">Detail</Button>
+                                                {/* Detail button now hints functionality or could navigate to an evaluation page later */}
+                                                <Button variant="outline" size="sm" onClick={() => toast.info("Fitur detail sesi akan datang!")}>
+                                                    Detail
+                                                </Button>
                                             </CardContent>
                                         </Card>
                                     ))

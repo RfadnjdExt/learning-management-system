@@ -63,21 +63,12 @@ export default function LoginPage() {
             <CardDescription>Sistem Evaluasi Pembelajaran Tahfidz</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded text-sm mb-4">
-              <strong>Pengaturan Pertama Kali?</strong> Ikuti panduan AUTH_SETUP.md untuk membuat akun Anda di Supabase
-              terlebih dahulu.
-            </div>
+            {/* Removed Dev Hint: First Time Setup */}
 
             <form onSubmit={handleLogin} className="space-y-4">
               {error && (
                 <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded text-sm">
                   <strong>Gagal Masuk:</strong> {error}
-                  {error.includes("profile") && (
-                    <p className="mt-2 text-xs">
-                      Ini biasanya berarti akun pengguna ada di Supabase Auth tetapi tidak di database kami. Periksa
-                      AUTH_SETUP.md.
-                    </p>
-                  )}
                 </div>
               )}
 
@@ -120,9 +111,9 @@ export default function LoginPage() {
 
         <Card className="w-full bg-blue-50 border-blue-200">
           <CardHeader>
-            <CardTitle className="text-base">Akun Demo (Setelah Setup)</CardTitle>
+            <CardTitle className="text-base">Akun Demo</CardTitle>
             <CardDescription>
-              Klik untuk isi otomatis. Hanya tersedia setelah menyelesaikan AUTH_SETUP.md
+              Klik untuk isi otomatis. Gunakan akun ini untuk mencoba aplikasi.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -145,36 +136,7 @@ export default function LoginPage() {
           </CardContent>
         </Card>
 
-        <Card className="w-full bg-gray-50 border-gray-200">
-          <CardHeader>
-            <CardTitle className="text-base text-gray-900">Petunjuk Setup</CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm text-gray-700 space-y-3">
-            <div>
-              <strong className="block text-gray-900 mb-1">1. Buat Institusi (Opsional)</strong>
-              <p className="text-xs">Buat institusi di Supabase untuk mengatur pengguna dan kelas.</p>
-            </div>
-            <div>
-              <strong className="block text-gray-900 mb-1">2. Buat Akun Supabase Auth</strong>
-              <p className="text-xs">
-                Buka Dashboard Supabase → Authentication → Users → Add User. Buat akun dengan email demo di atas.
-              </p>
-            </div>
-            <div>
-              <strong className="block text-gray-900 mb-1">3. Dapatkan User ID</strong>
-              <p className="text-xs">Salin UUID setiap pengguna dari Supabase Auth (ditampilkan di detail pengguna atau URL).</p>
-            </div>
-            <div>
-              <strong className="block text-gray-900 mb-1">4. Masukkan ke Database</strong>
-              <p className="text-xs">
-                Jalankan SQL dari AUTH_SETUP.md di Supabase SQL Editor Anda untuk membuat data pengguna.
-              </p>
-            </div>
-            <p className="text-xs text-gray-600 pt-2 border-t border-gray-200 mt-2">
-              Lihat <code className="bg-white px-2 py-1 rounded">AUTH_SETUP.md</code> untuk petunjuk langkah demi langkah yang detail dengan contoh SQL.
-            </p>
-          </CardContent>
-        </Card>
+        {/* Removed Dev Hint: Setup Instructions Card */}
       </div>
     </div>
   )

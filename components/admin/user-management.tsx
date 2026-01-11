@@ -31,13 +31,13 @@ export function UserManagement({ institutionId }: { institutionId: string }) {
     e.preventDefault()
 
     if (!formData.email || !formData.full_name) {
-      toast.error("Please fill in all fields")
+      toast.error("Mohon isi semua kolom")
       return
     }
 
     // Check if institutionId is present before adding
     if (!institutionId) {
-      toast.error("Current admin is not linked to any institution. Cannot add users.")
+      toast.error("Admin saat ini tidak terhubung ke institusi manapun.")
       return
     }
 
@@ -47,41 +47,41 @@ export function UserManagement({ institutionId }: { institutionId: string }) {
     })
 
     if (error) {
-      toast.error("Failed to add user: " + error.message)
+      toast.error("Gagal menambah pengguna: " + error.message)
       return
     }
 
-    toast.success("User added successfully")
+    toast.success("Pengguna berhasil ditambahkan")
     setFormData({ email: "", full_name: "", role: "murid" })
     setShowForm(false)
     fetchUsers()
   }
 
   async function handleDeleteUser(userId: string) {
-    if (confirm("Are you sure you want to delete this user?")) {
+    if (confirm("Apakah Anda yakin ingin menghapus pengguna ini?")) {
       const { error } = await supabase.from("users").delete().eq("id", userId)
       if (error) {
-        toast.error("Failed to delete user: " + error.message)
+        toast.error("Gagal menghapus pengguna: " + error.message)
       } else {
-        toast.success("User deleted successfully")
+        toast.success("Pengguna berhasil dihapus")
         fetchUsers()
       }
     }
   }
 
-  if (isLoading) return <div className="text-center py-10">Loading...</div>
+  if (isLoading) return <div className="text-center py-10">Memuat...</div>
 
   return (
     <Card>
       <CardHeader>
         <div className="flex justify-between items-start">
           <div>
-            <CardTitle>Users</CardTitle>
-            <CardDescription>Manage institution users and their roles</CardDescription>
+            <CardTitle>Daftar Pengguna</CardTitle>
+            <CardDescription>Kelola pengguna institusi dan peran mereka</CardDescription>
           </div>
           <Button onClick={() => setShowForm(!showForm)} size="sm">
             <Plus className="w-4 h-4 mr-2" />
-            Add User
+            Tambah Pengguna
           </Button>
         </div>
       </CardHeader>
@@ -89,11 +89,11 @@ export function UserManagement({ institutionId }: { institutionId: string }) {
         {showForm && (
           <form onSubmit={handleAddUser} className="space-y-4 p-4 bg-muted rounded-lg">
             <div>
-              <label className="text-sm font-medium">Full Name</label>
+              <label className="text-sm font-medium">Nama Lengkap</label>
               <Input
                 value={formData.full_name}
                 onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                placeholder="John Doe"
+                placeholder="Contoh: Ahmad Fulan"
               />
             </div>
             <div>
@@ -102,25 +102,25 @@ export function UserManagement({ institutionId }: { institutionId: string }) {
                 type="email"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                placeholder="john@example.com"
+                placeholder="ahmad@example.com"
               />
             </div>
             <div>
-              <label className="text-sm font-medium">Role</label>
+              <label className="text-sm font-medium">Peran (Role)</label>
               <select
                 value={formData.role}
                 onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                 className="w-full px-3 py-2 border border-input rounded-md bg-background"
               >
-                <option value="murid">Student (Murid)</option>
-                <option value="guru">Teacher (Guru)</option>
+                <option value="murid">Santri (Murid)</option>
+                <option value="guru">Ustadz (Guru)</option>
                 <option value="admin">Admin</option>
               </select>
             </div>
             <div className="flex gap-2">
-              <Button type="submit">Add User</Button>
+              <Button type="submit">Simpan</Button>
               <Button type="button" variant="outline" onClick={() => setShowForm(false)}>
-                Cancel
+                Batal
               </Button>
             </div>
           </form>
@@ -130,10 +130,10 @@ export function UserManagement({ institutionId }: { institutionId: string }) {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b">
-                <th className="text-left py-2 px-4">Name</th>
+                <th className="text-left py-2 px-4">Nama</th>
                 <th className="text-left py-2 px-4">Email</th>
-                <th className="text-left py-2 px-4">Role</th>
-                <th className="text-left py-2 px-4">Actions</th>
+                <th className="text-left py-2 px-4">Peran</th>
+                <th className="text-left py-2 px-4">Aksi</th>
               </tr>
             </thead>
             <tbody>
@@ -143,14 +143,14 @@ export function UserManagement({ institutionId }: { institutionId: string }) {
                   <td className="py-2 px-4">{user.email}</td>
                   <td className="py-2 px-4">
                     <span className="inline-block px-2 py-1 bg-primary/10 text-primary rounded text-xs capitalize">
-                      {user.role}
+                      {user.role === 'murid' ? 'Santri' : user.role === 'guru' ? 'Ustadz' : user.role}
                     </span>
                   </td>
                   <td className="py-2 px-4">
                     <button
                       onClick={() => handleDeleteUser(user.id)}
                       className="text-red-600 hover:text-red-700"
-                      title="Delete user"
+                      title="Hapus pengguna"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>

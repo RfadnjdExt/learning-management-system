@@ -9,6 +9,8 @@ async function LogoutButton() {
     "use server"
     const supabase = await createClient()
     await supabase.auth.signOut()
+    const { redirect } = await import("next/navigation")
+    redirect("/auth/login")
   }
 
   return (

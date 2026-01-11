@@ -7,6 +7,17 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Plus } from "lucide-react"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import { toast } from "sonner"
 
 // tipe data
 type Class = { id: string; name: string }
@@ -34,7 +45,10 @@ export function StudentEvaluation({
   const [students, setStudents] = useState<Student[]>([])
   const [sessions, setSessions] = useState<Session[]>([])
   const [templates, setTemplates] = useState<Template[]>([])
-  const [showEvalForm, setShowEvalForm] = useState(false)
+
+  // Dialog State
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+
   const [selectedStudent, setSelectedStudent] = useState<string | null>(null)
   const [selectedSession, setSelectedSession] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -51,7 +65,7 @@ export function StudentEvaluation({
 
   useEffect(() => {
     fetchInitialData()
-  }, [guruId, institutionId]) // fix dependency
+  }, [guruId, institutionId])
 
   async function fetchInitialData() {
     setIsLoading(true)
@@ -103,23 +117,29 @@ export function StudentEvaluation({
       setSessions(sessionsRes.data || [])
     } catch (err) {
       console.error("Error fetching class data:", err)
+      toast.error("Gagal memuat data kelas")
     }
   }
 
   async function handleAddEvaluation(e: React.FormEvent) {
     e.preventDefault()
 
-    if (!selectedStudent || !selectedSession || !evalFormData.template_id) return
+    if (!selectedStudent || !selectedSession || !evalFormData.template_id) {
+      toast.error("Mohon lengkapi data sesi, santri, dan template.")
+      return
+    }
 
     try {
       const { error } = await supabase.from("evaluations").insert({
         session_id: selectedSession,
         user_id: selectedStudent,
         evaluator_id: guruId,
-        ...evalFormData, // fix duplicate template_id
+        ...evalFormData,
       })
 
       if (error) throw error
+
+      toast.success("Evaluasi berhasil disimpan")
 
       // reset form
       setEvalFormData({
@@ -129,12 +149,12 @@ export function StudentEvaluation({
         tartil_level: "",
         additional_notes: "",
       })
-      setShowEvalForm(false)
+      setIsDialogOpen(false)
       setSelectedStudent(null)
       setSelectedSession(null)
-      // TODO: fetch evaluations again untuk render list
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error adding evaluation:", err)
+      toast.error("Gagal menyimpan evaluasi: " + err.message)
     }
   }
 
@@ -152,7 +172,7 @@ export function StudentEvaluation({
         </Card>
       ) : (
         <>
-          <div className="flex gap-2 mb-4">
+          <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
             {classes.map((cls) => (
               <Button
                 key={cls.id}
@@ -161,6 +181,7 @@ export function StudentEvaluation({
                   setSelectedClass(cls.id)
                   fetchClassData(cls.id)
                 }}
+                className="whitespace-nowrap"
               >
                 {cls.name}
               </Button>
@@ -181,124 +202,156 @@ export function StudentEvaluation({
                       <CardTitle>Evaluasi Mutabaah</CardTitle>
                       <CardDescription>Catat evaluasi harian santri</CardDescription>
                     </div>
-                    <Button onClick={() => setShowEvalForm(!showEvalForm)} size="sm">
-                      <Plus className="w-4 h-4 mr-2" />
-                      Tambah Evaluasi
-                    </Button>
+
+                    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                      <DialogTrigger asChild>
+                        <Button size="sm">
+                          <Plus className="w-4 h-4 mr-2" />
+                          Tambah Evaluasi
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-xl">
+                        <DialogHeader>
+                          <DialogTitle>Tambah Evaluasi Baru</DialogTitle>
+                          <DialogDescription>
+                            Input penilaian hafalan santri
+                          </DialogDescription>
+                        </DialogHeader>
+
+                        <form onSubmit={handleAddEvaluation} className="space-y-4 mt-2">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <Label>Pilih Sesi</Label>
+                              <select
+                                value={selectedSession || ""}
+                                onChange={(e) => setSelectedSession(e.target.value)}
+                                className="w-full px-3 py-2 border border-input rounded-md bg-background"
+                                required
+                              >
+                                <option value="">-- Pilih Sesi --</option>
+                                {sessions.map((s) => (
+                                  <option key={s.id} value={s.id}>
+                                    {new Date(s.session_date).toLocaleDateString("id-ID")}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                            <div className="space-y-2">
+                              <Label>Pilih Santri</Label>
+                              <select
+                                value={selectedStudent || ""}
+                                onChange={(e) => setSelectedStudent(e.target.value)}
+                                className="w-full px-3 py-2 border border-input rounded-md bg-background"
+                                required
+                              >
+                                <option value="">-- Pilih Santri --</option>
+                                {students.map((s) => (
+                                  <option key={s.id} value={s.id}>
+                                    {s.full_name}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label>Template Penilaian</Label>
+                            <select
+                              value={evalFormData.template_id}
+                              onChange={(e) =>
+                                setEvalFormData({ ...evalFormData, template_id: e.target.value })
+                              }
+                              className="w-full px-3 py-2 border border-input rounded-md bg-background"
+                              required
+                            >
+                              <option value="">-- Pilih Template --</option>
+                              {templates.map((t) => (
+                                <option key={t.id} value={t.id}>
+                                  {t.name}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+
+                          <div className="grid grid-cols-3 gap-2">
+                            <div className="space-y-1">
+                              <Label className="text-xs">Tajwid</Label>
+                              <select
+                                value={evalFormData.tajweed_level}
+                                onChange={(e) =>
+                                  setEvalFormData({ ...evalFormData, tajweed_level: e.target.value })
+                                }
+                                className="w-full px-3 py-2 border border-input rounded-md bg-background text-sm"
+                              >
+                                <option value="">Pilih...</option>
+                                <option value="belum_hafal">Belum Hafal</option>
+                                <option value="hafal_tidak_lancar">Tidak Lancar</option>
+                                <option value="hafal_lancar">Lancar</option>
+                                <option value="hafal_sangat_lancar">Sangat Lancar</option>
+                              </select>
+                            </div>
+                            <div className="space-y-1">
+                              <Label className="text-xs">Hafalan</Label>
+                              <select
+                                value={evalFormData.hafalan_level}
+                                onChange={(e) =>
+                                  setEvalFormData({ ...evalFormData, hafalan_level: e.target.value })
+                                }
+                                className="w-full px-3 py-2 border border-input rounded-md bg-background text-sm"
+                              >
+                                <option value="">Pilih...</option>
+                                <option value="belum_hafal">Belum Hafal</option>
+                                <option value="hafal_tidak_lancar">Tidak Lancar</option>
+                                <option value="hafal_lancar">Lancar</option>
+                                <option value="hafal_sangat_lancar">Sangat Lancar</option>
+                              </select>
+                            </div>
+                            <div className="space-y-1">
+                              <Label className="text-xs">Tartil</Label>
+                              <select
+                                value={evalFormData.tartil_level}
+                                onChange={(e) =>
+                                  setEvalFormData({ ...evalFormData, tartil_level: e.target.value })
+                                }
+                                className="w-full px-3 py-2 border border-input rounded-md bg-background text-sm"
+                              >
+                                <option value="">Pilih...</option>
+                                <option value="belum_hafal">Belum Hafal</option>
+                                <option value="hafal_tidak_lancar">Tidak Lancar</option>
+                                <option value="hafal_lancar">Lancar</option>
+                                <option value="hafal_sangat_lancar">Sangat Lancar</option>
+                              </select>
+                            </div>
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label>Catatan Tambahan</Label>
+                            <textarea
+                              placeholder="Tulis catatan perkembangan..."
+                              value={evalFormData.additional_notes}
+                              onChange={(e) =>
+                                setEvalFormData({ ...evalFormData, additional_notes: e.target.value })
+                              }
+                              className="w-full px-3 py-2 border border-input rounded-md bg-background min-h-[80px]"
+                            />
+                          </div>
+
+                          <DialogFooter>
+                            <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                              Batal
+                            </Button>
+                            <Button type="submit">Simpan Evaluasi</Button>
+                          </DialogFooter>
+                        </form>
+                      </DialogContent>
+                    </Dialog>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {showEvalForm && (
-                    <form onSubmit={handleAddEvaluation} className="space-y-4 p-4 bg-muted rounded-lg">
-                      <select
-                        value={selectedSession || ""}
-                        onChange={(e) => setSelectedSession(e.target.value)}
-                        className="w-full px-3 py-2 border border-input rounded-md bg-background"
-                        required
-                      >
-                        <option value="">Pilih Sesi</option>
-                        {sessions.map((s) => (
-                          <option key={s.id} value={s.id}>
-                            {new Date(s.session_date).toLocaleDateString()}
-                          </option>
-                        ))}
-                      </select>
-
-                      <select
-                        value={selectedStudent || ""}
-                        onChange={(e) => setSelectedStudent(e.target.value)}
-                        className="w-full px-3 py-2 border border-input rounded-md bg-background"
-                        required
-                      >
-                        <option value="">Pilih Santri</option>
-                        {students.map((s) => (
-                          <option key={s.id} value={s.id}>
-                            {s.full_name}
-                          </option>
-                        ))}
-                      </select>
-
-                      <select
-                        value={evalFormData.template_id}
-                        onChange={(e) =>
-                          setEvalFormData({ ...evalFormData, template_id: e.target.value })
-                        }
-                        className="w-full px-3 py-2 border border-input rounded-md bg-background"
-                        required
-                      >
-                        <option value="">Pilih Template</option>
-                        {templates.map((t) => (
-                          <option key={t.id} value={t.id}>
-                            {t.name}
-                          </option>
-                        ))}
-                      </select>
-
-                      <div className="grid grid-cols-3 gap-2">
-                        <select
-                          value={evalFormData.tajweed_level}
-                          onChange={(e) =>
-                            setEvalFormData({ ...evalFormData, tajweed_level: e.target.value })
-                          }
-                          className="px-3 py-2 border border-input rounded-md bg-background text-sm"
-                        >
-                          <option value="">Tajwid</option>
-                          <option value="belum_hafal">Belum Hafal</option>
-                          <option value="hafal_tidak_lancar">Tidak Lancar</option>
-                          <option value="hafal_lancar">Lancar</option>
-                          <option value="hafal_sangat_lancar">Sangat Lancar</option>
-                        </select>
-
-                        <select
-                          value={evalFormData.hafalan_level}
-                          onChange={(e) =>
-                            setEvalFormData({ ...evalFormData, hafalan_level: e.target.value })
-                          }
-                          className="px-3 py-2 border border-input rounded-md bg-background text-sm"
-                        >
-                          <option value="">Hafalan</option>
-                          <option value="belum_hafal">Belum Hafal</option>
-                          <option value="hafal_tidak_lancar">Tidak Lancar</option>
-                          <option value="hafal_lancar">Lancar</option>
-                          <option value="hafal_sangat_lancar">Sangat Lancar</option>
-                        </select>
-
-                        <select
-                          value={evalFormData.tartil_level}
-                          onChange={(e) =>
-                            setEvalFormData({ ...evalFormData, tartil_level: e.target.value })
-                          }
-                          className="px-3 py-2 border border-input rounded-md bg-background text-sm"
-                        >
-                          <option value="">Tartil</option>
-                          <option value="belum_hafal">Belum Hafal</option>
-                          <option value="hafal_tidak_lancar">Tidak Lancar</option>
-                          <option value="hafal_lancar">Lancar</option>
-                          <option value="hafal_sangat_lancar">Sangat Lancar</option>
-                        </select>
-                      </div>
-
-                      <textarea
-                        placeholder="Catatan tambahan..."
-                        value={evalFormData.additional_notes}
-                        onChange={(e) =>
-                          setEvalFormData({ ...evalFormData, additional_notes: e.target.value })
-                        }
-                        className="w-full px-3 py-2 border border-input rounded-md bg-background"
-                        rows={3}
-                      />
-
-                      <div className="flex gap-2">
-                        <Button type="submit">Simpan Evaluasi</Button>
-                        <Button type="button" variant="outline" onClick={() => setShowEvalForm(false)}>
-                          Batal
-                        </Button>
-                      </div>
-                    </form>
-                  )}
-
                   <div className="text-center py-10 text-muted-foreground">
-                    Evaluasi untuk kelas ini akan muncul di sini
+                    Pilih "Tambah Evaluasi" untuk mulai menilai hafalan santri.
+                    <br />
+                    (Daftar riwayat evaluasi akan muncul di sini nanti)
                   </div>
                 </CardContent>
               </Card>

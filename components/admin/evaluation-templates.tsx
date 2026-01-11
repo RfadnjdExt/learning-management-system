@@ -47,25 +47,25 @@ export function EvaluationTemplates({ institutionId }: { institutionId: string }
   }
 
   async function handleDeleteTemplate(templateId: string) {
-    if (confirm("Delete this template?")) {
+    if (confirm("Hapus template ini?")) {
       await supabase.from("evaluation_templates").delete().eq("id", templateId)
       fetchTemplates()
     }
   }
 
-  if (isLoading) return <div className="text-center py-10">Loading...</div>
+  if (isLoading) return <div className="text-center py-10">Memuat...</div>
 
   return (
     <Card>
       <CardHeader>
         <div className="flex justify-between items-start">
           <div>
-            <CardTitle>Templates</CardTitle>
-            <CardDescription>Manage evaluation templates for your institution</CardDescription>
+            <CardTitle>Daftar Template</CardTitle>
+            <CardDescription>Kelola template penilaian untuk institusi Anda</CardDescription>
           </div>
           <Button onClick={() => setShowForm(!showForm)} size="sm">
             <Plus className="w-4 h-4 mr-2" />
-            New Template
+            Template Baru
           </Button>
         </div>
       </CardHeader>
@@ -73,25 +73,25 @@ export function EvaluationTemplates({ institutionId }: { institutionId: string }
         {showForm && (
           <form onSubmit={handleAddTemplate} className="space-y-4 p-4 bg-muted rounded-lg">
             <Input
-              placeholder="Template name"
+              placeholder="Nama template"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               required
             />
             <Input
-              placeholder="Description"
+              placeholder="Deskripsi"
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             />
             <Input
-              placeholder="Evaluator label (e.g., Guru, Ustadz)"
+              placeholder="Label Penilai (contoh: Guru, Ustadz)"
               value={formData.evaluator_label}
               onChange={(e) => setFormData({ ...formData, evaluator_label: e.target.value })}
             />
             <div className="flex gap-2">
-              <Button type="submit">Create Template</Button>
+              <Button type="submit">Simpan Template</Button>
               <Button type="button" variant="outline" onClick={() => setShowForm(false)}>
-                Cancel
+                Batal
               </Button>
             </div>
           </form>
@@ -104,7 +104,7 @@ export function EvaluationTemplates({ institutionId }: { institutionId: string }
                 <div className="flex-1">
                   <p className="font-medium">{template.name}</p>
                   <p className="text-sm text-muted-foreground">{template.description}</p>
-                  <p className="text-xs text-muted-foreground mt-2">Evaluator: {template.evaluator_label}</p>
+                  <p className="text-xs text-muted-foreground mt-2">Penilai: {template.evaluator_label}</p>
                 </div>
                 <button onClick={() => handleDeleteTemplate(template.id)} className="text-red-600 hover:text-red-700">
                   <Trash2 className="w-4 h-4" />
