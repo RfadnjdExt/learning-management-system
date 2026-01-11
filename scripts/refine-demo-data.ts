@@ -19,7 +19,7 @@ const DEMO_EMAILS = [
 ]
 
 async function refineDemoData() {
-    console.log("🧹 Starting Demo Refinement...")
+    console.log("🧹 Starting Demo Refinement (Randomized)...")
 
     // 1. Fetch Demo Users
     const { data: demoUsers } = await supabase.from("users").select("*").in("email", DEMO_EMAILS)
@@ -30,35 +30,22 @@ async function refineDemoData() {
     }
     console.log(`✅ Found ${demoUsers.length} Demo Users.`)
 
-    // 2. Update Demo Profiles (Try/Catch for missing columns)
+    // 2. Update Demo Profiles 
     console.log("📝 Updating Demo Profiles...")
     for (const user of demoUsers) {
         const updates: any = {
             phone: faker.phone.number(),
-            // address: faker.location.streetAddress() // Tentative, might fail if col missing
+            address: `${faker.location.street()}, ${faker.location.city()}`
         }
 
-        // Let's try adding address
-        updates.address = `${faker.location.street()}, ${faker.location.city()}`
-
+        // Force Ahmad Santri name if needed, but let's stick to random phone/addr
         const { error } = await supabase.from("users").update(updates).eq("id", user.id)
-
-        if (error) {
-            console.error(`   ⚠️ Failed to update ${user.email}: ${error.message}`)
-            if (error.message.includes('"address"')) {
-                console.log("   👉 It seems 'address' column is missing. Attempting update without address...")
-                delete updates.address
-                await supabase.from("users").update(updates).eq("id", user.id)
-            }
-        } else {
-            console.log(`   ✅ Updated ${user.email}`)
-        }
+        if (!error) console.log(`   ✅ Updated ${user.email}`)
     }
 
     // 3. Wipe Non-Demo Data
     console.log("🔥 Burning non-demo data...")
 
-    // Wipe Activity
     await supabase.from("evaluations").delete().neq("id", "00000000-0000-0000-0000-000000000000")
     await supabase.from("sessions").delete().neq("id", "00000000-0000-0000-0000-000000000000")
     await supabase.from("class_enrollments").delete().neq("user_id", "00000000-0000-0000-0000-000000000000")
@@ -68,27 +55,24 @@ async function refineDemoData() {
     const demoIds = demoUsers.map(u => u.id)
     const { error: delUserError } = await supabase.from("users").delete().not("id", "in", `(${demoIds.join(',')})`)
     if (delUserError) console.error("Error deleting users:", delUserError.message)
-    else console.log("   ✅ Non-demo users deleted from public.users.")
+    else console.log("   ✅ Non-demo users deleted.")
 
     // 4. Seed Targeted Demo Activity
-    console.log("🌱 Seeding Demo Activity...")
+    console.log("🌱 Seeding Random Demo Activity...")
 
     const guru = demoUsers.find(u => u.email === "guru@tahfidz.test")
     const murids = demoUsers.filter(u => u.email.startsWith("murid"))
-    const admin = demoUsers.find(u => u.email === "admin@tahfidz.test") // For institution
+    const admin = demoUsers.find(u => u.email === "admin@tahfidz.test")
 
-    if (!guru || murids.length === 0) {
-        console.log("Skipping activity seed (missing guru/murids)")
-        return
-    }
+    if (!guru || murids.length === 0) return
 
     // Get Sem/Template
     const { data: sem } = await supabase.from("semesters").select("id").eq("is_active", true).single()
-    const { data: tmpl } = await supabase.from("evaluation_templates").select("id").limit(1).single() // Any template
+    const { data: tmpl } = await supabase.from("evaluation_templates").select("id").limit(1).single()
 
-    if (!sem || !tmpl) { console.log("Missing semester/template"); return; }
+    if (!sem || !tmpl) return
 
-    // Create 3 Classes for Demo Guru
+    // Create 3 Classes
     const classesToMake = ["Halaqah Pagi", "Halaqah Sore", "Kelas Tahsin Ekstra"]
     for (const cName of classesToMake) {
         const { data: cls } = await supabase.from("classes").insert({
@@ -108,13 +92,13 @@ async function refineDemoData() {
                 })
             }
 
-            // Create Sessions/Evals
+            // Create Sessions/Evals (History)
             for (let i = 0; i < 5; i++) {
                 const { data: sess } = await supabase.from("sessions").insert({
                     class_id: cls.id,
                     guru_id: guru.id,
-                    session_date: new Date(Date.now() - i * 86400000).toISOString().split('T')[0], // Past days
-                    notes: `Sesi ke-${5 - i}`
+                    session_date: new Date(Date.now() - i * 86400000).toISOString().split('T')[0],
+                    notes: faker.lorem.sentence()
                 }).select().single()
 
                 if (sess) {
@@ -124,10 +108,19 @@ async function refineDemoData() {
                             user_id: m.id,
                             evaluator_id: guru.id,
                             template_id: tmpl.id,
-                            tajweed_level: "hafal_lancar",
-                            hafalan_level: "hafal_lancar",
-                            tartil_level: "hafal_lancar",
-                            additional_notes: "Bagus, pertahankan."
+                            // Randomize!
+                            tajweed_level: faker.helpers.arrayElement(['hafal_lancar', 'lancar_sebagian', 'perlu_perbaikan']),
+                            hafalan_level: faker.helpers.arrayElement(['hafal_lancar', 'banyak_lupa', 'perlu_murojaah']),
+                            tartil_level: faker.helpers.arrayElement(['baik', 'cukup', 'kurang']),
+                            additional_notes: faker.helpers.arrayElement([
+                                "Bacaan sudah bagus, pertahankan.",
+                                "Makhraj huruf perlu diperbaiki lagi.",
+                                "Hafalan agak tersendat di ayat-ayat akhir.",
+                                "Perbanyak murojaah di rumah.",
+                                "Sangat lancar hari ini, masyaAllah.",
+                                "Fokus pada panjang pendek mad.",
+                                "Jangan terburu-buru saat setoran."
+                            ])
                         })
                     }
                 }
@@ -135,7 +128,7 @@ async function refineDemoData() {
         }
     }
 
-    console.log("✅ Demo Reset Complete!")
+    console.log("✅ Random Demo Data Seeded!")
 }
 
 refineDemoData()
