@@ -158,8 +158,11 @@ export function StudentEvaluation({
       })
 
       if (error) {
-        if (error.code === "23505") {
-          toast.error("Santri ini sudah dinilai pada sesi ini. Silakan pilih sesi lain atau edit data di menu Detail Sesi.")
+        // Check for Postgres error code 23505 OR duplicate key message
+        if (error.code === "23505" || error.message.includes("duplicate key")) {
+          toast.error("Santri ini sudah dinilai pada sesi ini. Data tidak disimpan.")
+          // Refresh list just in case
+          if (selectedSession) fetchEvaluatedStudents(selectedSession)
         } else {
           throw error
         }
@@ -168,17 +171,22 @@ export function StudentEvaluation({
 
       toast.success("Evaluasi berhasil disimpan")
 
-      // reset form
+      // Refresh the list of evaluated students immediately
+      if (selectedSession) {
+        await fetchEvaluatedStudents(selectedSession)
+      }
+
+      // Reset form but KEEP the session selected for easier bulk entry
       setEvalFormData({
-        template_id: "",
+        template_id: evalFormData.template_id, // Keep template for speed
         tajweed_level: "",
         hafalan_level: "",
         tartil_level: "",
         additional_notes: "",
       })
-      setIsDialogOpen(false)
+      // Don't close dialog, just reset student
       setSelectedStudent(null)
-      setSelectedSession(null)
+
     } catch (err: any) {
       console.error("Error adding evaluation:", err)
       toast.error("Gagal menyimpan evaluasi: " + err.message)
