@@ -26,8 +26,10 @@ export async function MuridSidebar() {
   return (
     <div className="w-64 border-r border-border bg-sidebar flex flex-col h-screen">
       <div className="p-6 border-b border-sidebar-border">
-        <h1 className="text-xl font-bold text-sidebar-foreground">Mutabaah</h1>
-        <p className="text-xs text-sidebar-accent-foreground/70">Portal Santri</p>
+        <Link href="/" className="block hover:opacity-80 transition-opacity">
+          <h1 className="text-xl font-bold text-sidebar-foreground">Mutabaah</h1>
+          <p className="text-xs text-sidebar-accent-foreground/70">Portal Santri</p>
+        </Link>
       </div>
 
       <div className="p-4 border-b border-sidebar-border">

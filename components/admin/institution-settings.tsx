@@ -43,9 +43,9 @@ export function InstitutionSettings({ initialData }: { initialData: Institution 
 
             if (error) throw error
 
-            toast.success("Settings updated successfully")
+            toast.success("Pengaturan berhasil disimpan")
         } catch (error: any) {
-            toast.error("Failed to update settings: " + error.message)
+            toast.error("Gagal menyimpan: " + error.message)
         } finally {
             setIsLoading(false)
         }
@@ -54,15 +54,15 @@ export function InstitutionSettings({ initialData }: { initialData: Institution 
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Institution Details</CardTitle>
+                <CardTitle>Profil Institusi</CardTitle>
                 <CardDescription>
-                    Manage your institution's profile information.
+                    Perbarui informasi dasar institusi Anda.
                 </CardDescription>
             </CardHeader>
             <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="grid gap-2">
-                        <Label htmlFor="name">Institution Name</Label>
+                        <Label htmlFor="name">Nama Institusi</Label>
                         <Input
                             id="name"
                             value={formData.name}
@@ -72,18 +72,18 @@ export function InstitutionSettings({ initialData }: { initialData: Institution 
                     </div>
 
                     <div className="grid gap-2">
-                        <Label htmlFor="code">Institution Code</Label>
+                        <Label htmlFor="code">Kode Institusi</Label>
                         <Input
                             id="code"
                             value={formData.code}
                             disabled
                             className="bg-muted"
                         />
-                        <p className="text-xs text-muted-foreground">Unique identifier cannot be changed.</p>
+                        <p className="text-xs text-muted-foreground">Kode unik tidak dapat diubah.</p>
                     </div>
 
                     <div className="grid gap-2">
-                        <Label htmlFor="email">Email</Label>
+                        <Label htmlFor="email">Email Admin</Label>
                         <Input
                             id="email"
                             type="email"
@@ -93,16 +93,17 @@ export function InstitutionSettings({ initialData }: { initialData: Institution 
                     </div>
 
                     <div className="grid gap-2">
-                        <Label htmlFor="phone">Phone</Label>
+                        <Label htmlFor="phone">No. Telepon</Label>
                         <Input
                             id="phone"
                             value={formData.phone || ""}
                             onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                            placeholder="Contoh: 08123456789"
                         />
                     </div>
 
                     <div className="grid gap-2">
-                        <Label htmlFor="address">Address</Label>
+                        <Label htmlFor="address">Alamat Lengkap</Label>
                         <Textarea
                             id="address"
                             value={formData.address || ""}
@@ -111,18 +112,19 @@ export function InstitutionSettings({ initialData }: { initialData: Institution 
                     </div>
 
                     <div className="grid gap-2">
-                        <Label htmlFor="description">Description</Label>
+                        <Label htmlFor="description">Deskripsi Singkat</Label>
                         <Textarea
                             id="description"
                             value={formData.description || ""}
                             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                            placeholder="Motto atau deskripsi singkat..."
                         />
                     </div>
 
                     <div className="flex justify-end">
                         <Button type="submit" disabled={isLoading}>
                             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Save Changes
+                            Simpan Perubahan
                         </Button>
                     </div>
                 </form>

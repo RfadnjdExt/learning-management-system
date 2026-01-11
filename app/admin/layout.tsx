@@ -10,7 +10,7 @@ export default async function AdminLayout({
   await requireRole(["admin"])
 
   return (
-    <div className="flex h-screen">
+    <div className="flex min-h-screen">
       <AdminSidebar />
       <main className="flex-1">{children}</main>
     </div>

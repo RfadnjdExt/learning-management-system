@@ -6,9 +6,9 @@ export default async function GuruLayout({ children }: { children: React.ReactNo
   await requireRole(["guru"])
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex min-h-screen bg-background">
       <GuruSidebar />
-      <main className="flex-1 overflow-auto">{children}</main>
+      <main className="flex-1">{children}</main>
     </div>
   )
 }

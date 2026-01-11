@@ -1,3 +1,4 @@
+
 import { getCurrentUserWithRole } from "@/lib/auth-utils"
 import { createClient } from "@/lib/supabase/server"
 import { InstitutionSettings } from "@/components/admin/institution-settings"
@@ -17,8 +18,8 @@ export default async function AdminSettingsPage() {
     if (error || !institution) {
         return (
             <div className="p-6">
-                <h1 className="text-3xl font-bold text-red-600">Error Loading Settings</h1>
-                <p>Could not fetch institution details.</p>
+                <h1 className="text-3xl font-bold text-red-600">Terjadi Kesalahan</h1>
+                <p>Tidak dapat memuat detail institusi.</p>
             </div>
         )
     }
@@ -26,8 +27,8 @@ export default async function AdminSettingsPage() {
     return (
         <div className="p-6 space-y-6">
             <div>
-                <h1 className="text-3xl font-bold">Settings</h1>
-                <p className="text-muted-foreground">Manage application and institution settings</p>
+                <h1 className="text-3xl font-bold">Pengaturan</h1>
+                <p className="text-muted-foreground">Kelola profil dan pengaturan institusi</p>
             </div>
 
             <div className="max-w-2xl">

@@ -13,7 +13,8 @@ export function GuruDashboardContent({ guruId }: { guruId: string }) {
 
   useEffect(() => {
     async function fetchData() {
-      const today = new Date().toISOString().split("T")[0]
+      // Force Jakarta Timezone for consistency
+      const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Jakarta" })
 
       const [sessionsRes, evaluationsRes] = await Promise.all([
         supabase
@@ -25,7 +26,8 @@ export function GuruDashboardContent({ guruId }: { guruId: string }) {
           .order("session_date", { ascending: true }),
         supabase
           .from("evaluations")
-          .select("*, user:users(full_name), session:sessions(session_date)")
+          // explicit FK to resolve ambiguity (target: student)
+          .select("*, user:users!user_id(full_name), session:sessions(session_date)")
           .eq("evaluator_id", guruId)
           .limit(5)
           .order("created_at", { ascending: false }),
@@ -69,8 +71,13 @@ export function GuruDashboardContent({ guruId }: { guruId: string }) {
                         <p className="text-sm text-muted-foreground">
                           {new Date(session.session_date).toLocaleDateString()} {session.start_time || "—"}
                         </p>
+                        {session.notes && <p className="text-xs text-muted-foreground mt-1">"{session.notes}"</p>}
                       </div>
-                      <span className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded">Terjadwal</span>
+                      <span className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded">
+                        {session.session_date === new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Jakarta" })
+                          ? "Hari Ini"
+                          : "Mendatang"}
+                      </span>
                     </div>
                   </Card>
                 ))
@@ -100,10 +107,10 @@ export function GuruDashboardContent({ guruId }: { guruId: string }) {
                 <tbody>
                   {recentEvaluations.map((evaluation) => (
                     <tr key={evaluation.id} className="border-b hover:bg-muted/50">
-                      <td className="py-2 px-4">{evaluation.user?.full_name}</td>
+                      <td className="py-2 px-4">{evaluation.user?.full_name || "— (Hidden)"}</td>
                       <td className="py-2 px-4">{new Date(evaluation.session?.session_date).toLocaleDateString()}</td>
-                      <td className="py-2 px-4 text-xs capitalize">{evaluation.hafalan_level || "—"}</td>
-                      <td className="py-2 px-4 text-xs capitalize">{evaluation.tajweed_level || "—"}</td>
+                      <td className="py-2 px-4 text-xs capitalize">{evaluation.hafalan_level?.replace(/_/g, " ") || "—"}</td>
+                      <td className="py-2 px-4 text-xs capitalize">{evaluation.tajweed_level?.replace(/_/g, " ") || "—"}</td>
                     </tr>
                   ))}
                 </tbody>

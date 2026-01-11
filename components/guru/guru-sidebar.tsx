@@ -24,10 +24,12 @@ export async function GuruSidebar() {
   const { userData } = await getCurrentUserWithRole()
 
   return (
-    <div className="w-64 border-r border-border bg-sidebar flex flex-col h-screen">
+    <div className="w-64 border-r border-border bg-sidebar flex flex-col h-screen sticky top-0">
       <div className="p-6 border-b border-sidebar-border">
-        <h1 className="text-xl font-bold text-sidebar-foreground">Mutabaah</h1>
-        <p className="text-xs text-sidebar-accent-foreground/70">Panel Guru</p>
+        <Link href="/" className="block hover:opacity-80 transition-opacity">
+          <h1 className="text-xl font-bold text-sidebar-foreground">Mutabaah</h1>
+          <p className="text-xs text-sidebar-accent-foreground/70">Panel Guru</p>
+        </Link>
       </div>
 
       <div className="p-4 border-b border-sidebar-border">

@@ -8,6 +8,7 @@ import { loginAction } from "@/app/auth/actions"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import Link from "next/link"
 
 const DEMO_CREDENTIALS = [
   { email: "admin@tahfidz.test", password: "Admin123456!", role: "Admin" },
@@ -110,6 +111,12 @@ export default function LoginPage() {
             </form>
           </CardContent>
         </Card>
+
+        <div className="text-center">
+          <Link href="/" className="text-sm text-indigo-600 hover:text-indigo-800 hover:underline">
+            &larr; Kembali ke Beranda
+          </Link>
+        </div>
 
         <Card className="w-full bg-blue-50 border-blue-200">
           <CardHeader>

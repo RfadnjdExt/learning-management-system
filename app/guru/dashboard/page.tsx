@@ -1,3 +1,4 @@
+
 import { getCurrentUserWithRole } from "@/lib/auth-utils"
 import { createClient } from "@/lib/supabase/server"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -13,8 +14,9 @@ export default async function GuruDashboardPage() {
     .select("*, semester:semesters(name)")
     .eq("guru_id", userData.id)
 
-  // Fetch today's sessions
-  const today = new Date().toISOString().split("T")[0]
+  // Fetch today's sessions (Force Jakarta Timezone)
+  const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Jakarta" })
+
   const { data: todaySessions } = await supabase
     .from("sessions")
     .select("*, class:classes(name)")
@@ -45,7 +47,7 @@ export default async function GuruDashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{todaySessions?.length || 0}</div>
-            <p className="text-xs text-muted-foreground">Terjadwal hari ini</p>
+            <p className="text-xs text-muted-foreground">Terjadwal hari ini ({today})</p>
           </CardContent>
         </Card>
 
