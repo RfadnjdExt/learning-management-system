@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ArrowLeft, Plus, Calendar, Users, BookOpen } from "lucide-react"
+import { ArrowLeft, Plus, Calendar, Users, BookOpen, Settings } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import {
@@ -166,16 +166,24 @@ export function ClassManager({ classId, guruId }: ClassManagerProps) {
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="flex items-center gap-4">
-                <Link href="/guru/classes">
-                    <Button variant="ghost" size="icon">
-                        <ArrowLeft className="h-5 w-5" />
+            <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                    <Link href="/guru/classes">
+                        <Button variant="ghost" size="icon">
+                            <ArrowLeft className="h-5 w-5" />
+                        </Button>
+                    </Link>
+                    <div>
+                        <h1 className="text-2xl font-bold">{classData.name}</h1>
+                        <p className="text-muted-foreground">{classData.semester?.name} • {students.length} Santri</p>
+                    </div>
+                </div>
+                <Link href={`/guru/classes/${classId}/settings`}>
+                    <Button variant="outline" size="sm">
+                        <Settings className="h-4 w-4 mr-2" />
+                        Pengaturan
                     </Button>
                 </Link>
-                <div>
-                    <h1 className="text-2xl font-bold">{classData.name}</h1>
-                    <p className="text-muted-foreground">{classData.semester?.name} • {students.length} Santri</p>
-                </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

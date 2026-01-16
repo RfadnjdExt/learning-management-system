@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Plus, Trash2 } from "lucide-react"
+import Link from "next/link"
 import {
   Dialog,
   DialogContent,
@@ -184,21 +185,35 @@ export function SessionManagement({ guruId, institutionId }: { guruId: string; i
             <p className="text-sm text-muted-foreground text-center py-8">Belum ada sesi dibuat</p>
           ) : (
             sessions.map((session) => (
-              <Card key={session.id} className="p-4">
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <p className="font-medium">{session.class?.name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {new Date(session.session_date).toLocaleDateString("id-ID")} • {session.start_time || ""} -{" "}
-                      {session.end_time || ""}
-                    </p>
-                    {session.notes && <p className="text-sm mt-2">{session.notes}</p>}
+              <Link key={session.id} href={`/guru/classes/${session.class_id}`} className="block">
+                <Card className="p-4 hover:bg-muted/50 transition-colors cursor-pointer group">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <p className="font-medium group-hover:text-primary transition-colors">{session.class?.name}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {new Date(session.session_date).toLocaleDateString("id-ID", {
+                          weekday: 'long',
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })} • {session.start_time || ""} -{" "}
+                        {session.end_time || ""}
+                      </p>
+                      {session.notes && <p className="text-sm mt-2">{session.notes}</p>}
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        handleDeleteSession(session.id)
+                      }}
+                      className="text-red-600 hover:text-red-700 opacity-60 hover:opacity-100 transition-opacity p-2"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
-                  <button onClick={() => handleDeleteSession(session.id)} className="text-red-600 hover:text-red-700">
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              </Card>
+                </Card>
+              </Link>
             ))
           )}
         </div>

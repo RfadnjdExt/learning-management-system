@@ -4,7 +4,10 @@ DROP POLICY IF EXISTS "Admins can manage all users" ON users;
 -- 2. Create a secure function to check admin status
 -- SECURITY DEFINER allows this function to bypass RLS by running as the creator (postgres)
 CREATE OR REPLACE FUNCTION public.is_admin()
-RETURNS BOOLEAN AS $$
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = public
+AS $$
 BEGIN
   RETURN EXISTS (
     SELECT 1
@@ -13,7 +16,7 @@ BEGIN
     AND role = 'admin'
   );
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
 -- 3. Re-create the Users policy using the function
 -- This avoids recursion because the function bypasses the RLS check on 'users'

@@ -7,40 +7,57 @@ dotenv.config({ path: path.resolve(process.cwd(), ".env.local") })
 
 const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY!
 )
 
-async function testEnrollmentAccess() {
-    console.log("🕵️ Testing Enrollment Access...")
+// ... imports ...
 
-    // 1. Login
-    const { data: { session } } = await supabase.auth.signInWithPassword({
-        email: "guru@tahfidz.test",
+async function testEnrollmentAccess() {
+    console.log("🕵️ Testing Enrollment Access for Abdullah...")
+
+    // 1. Login as Abdullah
+    const { data: { session }, error: loginError } = await supabase.auth.signInWithPassword({
+        email: "abdullah@tahfidz.test",
         password: "Guru123456!"
     })
 
-    const guruId = session?.user.id
-    console.log(`   Guru ID: ${guruId}`)
-
-    // 2. Fetch Classes with Enrollment Count
-    const { data: classes, error } = await supabase
-        .from("classes")
-        .select("name, enrollments:class_enrollments(count)")
-        .eq("guru_id", guruId)
-
-    if (error) {
-        console.log("❌ Query Error:", error.message)
-    } else {
-        console.log(`✅ Found ${classes.length} classes.`)
-        classes.forEach(c => {
-            // @ts-ignore
-            console.log(`   - ${c.name}: ${c.enrollments?.[0]?.count || 0} students`)
-        })
+    if (loginError) {
+        console.error("❌ Login Failed:", loginError.message)
+        return
     }
 
-    // 3. Try to read enrollments directly
-    const { count } = await supabase.from("class_enrollments").select("*", { count: 'exact', head: true })
-    console.log(`   Total Enrollments visible to Guru directly: ${count}`)
+    const guruId = session?.user.id
+    console.log(`✅ Logged in as: ${guruId}`)
+
+    // 2. Fetch Classes
+    const { data: classes } = await supabase
+        .from("classes")
+        .select("id, name")
+        .eq("guru_id", guruId)
+
+    if (!classes || classes.length === 0) {
+        console.log("❌ No classes found for this guru.")
+        return
+    }
+
+    console.log(`✅ Found ${classes.length} classes:`)
+
+    for (const cls of classes) {
+        console.log(`   Class: ${cls.name} (${cls.id})`)
+
+        // 3. Fetch Enrollments
+        const { data: enrollments, error: enrollError } = await supabase
+            .from("class_enrollments")
+            .select("*, user:users(full_name)")
+            .eq("class_id", cls.id)
+
+        if (enrollError) {
+            console.error(`      ❌ Error fetching enrollments: ${enrollError.message}`)
+        } else {
+            console.log(`      Found ${enrollments.length} enrollments.`)
+            enrollments.forEach(e => console.log(`        - Student: ${e.user?.full_name || 'Unknown'} (${e.user_id})`))
+        }
+    }
 }
 
 testEnrollmentAccess()

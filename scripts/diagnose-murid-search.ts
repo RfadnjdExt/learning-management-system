@@ -6,7 +6,7 @@ import path from "path"
 dotenv.config({ path: path.resolve(process.cwd(), ".env.local") })
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY!
 
 const MURID_EMAIL = "murid1@tahfidz.test"
 const MURID_PASSWORD = "password123"
@@ -14,7 +14,7 @@ const MURID_PASSWORD = "password123"
 async function diagnoseMuridSearch() {
     console.log("🕵️ Starting Murid Search Diagnosis...")
 
-    const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+    const client = createClient(SUPABASE_URL, supabaseKey)
 
     // 1. Login
     const { data: authData, error: authError } = await client.auth.signInWithPassword({

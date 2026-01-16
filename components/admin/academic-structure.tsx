@@ -8,8 +8,10 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Plus } from "lucide-react"
+import { Plus, Users } from "lucide-react"
 import { toast } from "sonner"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
+import { Checkbox } from "@/components/ui/checkbox"
 
 
 export function AcademicStructure({ institutionId }: { institutionId: string }) {
@@ -20,6 +22,13 @@ export function AcademicStructure({ institutionId }: { institutionId: string }) 
   const [showClassForm, setShowClassForm] = useState(false)
   const [selectedSemester, setSelectedSemester] = useState<string | null>(null)
   const [teachers, setTeachers] = useState<any[]>([])
+  const [allStudents, setAllStudents] = useState<any[]>([])
+
+  // Enrollment State
+  const [showEnrollDialog, setShowEnrollDialog] = useState(false)
+  const [selectedClassForEnroll, setSelectedClassForEnroll] = useState<any>(null)
+  const [enrolledStudentIds, setEnrolledStudentIds] = useState<Set<string>>(new Set())
+  const [enrollSearch, setEnrollSearch] = useState("")
 
   const [semesterForm, setSemesterForm] = useState({ name: "", start_date: "", end_date: "" })
   const [classForm, setClassForm] = useState({ name: "", guru_id: "", description: "" })
@@ -31,15 +40,17 @@ export function AcademicStructure({ institutionId }: { institutionId: string }) 
   }, [institutionId])
 
   async function fetchData() {
-    const [semestersRes, classesRes, teachersRes] = await Promise.all([
+    const [semestersRes, classesRes, teachersRes, studentsRes] = await Promise.all([
       supabase.from("semesters").select("*").eq("institution_id", institutionId),
       supabase.from("classes").select("*").eq("institution_id", institutionId),
       supabase.from("users").select("*").eq("institution_id", institutionId).eq("role", "guru"),
+      supabase.from("users").select("*").eq("institution_id", institutionId).eq("role", "murid").order("full_name"),
     ])
 
     setSemesters(semestersRes.data || [])
     setClasses(classesRes.data || [])
     setTeachers(teachersRes.data || [])
+    setAllStudents(studentsRes.data || [])
     setIsLoading(false)
   }
 
@@ -81,6 +92,73 @@ export function AcademicStructure({ institutionId }: { institutionId: string }) 
     setShowClassForm(false)
     fetchData()
   }
+
+  async function handleOpenEnroll(cls: any) {
+    setSelectedClassForEnroll(cls)
+    setEnrollSearch("")
+
+    // Fetch current enrollments
+    const { data } = await supabase
+      .from("class_enrollments")
+      .select("user_id")
+      .eq("class_id", cls.id)
+
+    const currentIds = new Set((data || []).map((d: any) => d.user_id))
+    setEnrolledStudentIds(currentIds)
+    setShowEnrollDialog(true)
+  }
+
+  async function handleSaveEnrollment() {
+    if (!selectedClassForEnroll) return
+
+    const classId = selectedClassForEnroll.id
+
+    // Fetch latest current to diff against
+    const { data: existingData } = await supabase
+      .from("class_enrollments")
+      .select("user_id")
+      .eq("class_id", classId)
+
+    const existingIds = new Set((existingData || []).map((d: any) => d.user_id))
+
+    const toAdd = [...enrolledStudentIds].filter(id => !existingIds.has(id as string))
+    const toRemove = [...existingIds].filter(id => !enrolledStudentIds.has(id as string))
+
+    // Perform updates
+    if (toAdd.length > 0) {
+      const records = toAdd.map(uid => ({ class_id: classId, user_id: uid }))
+      const { error } = await supabase.from("class_enrollments").insert(records)
+      if (error) { toast.error("Error adding students: " + error.message); return }
+    }
+
+    if (toRemove.length > 0) {
+      const { error } = await supabase
+        .from("class_enrollments")
+        .delete()
+        .eq("class_id", classId)
+        .in("user_id", toRemove)
+      if (error) { toast.error("Error removing students: " + error.message); return }
+    }
+
+    toast.success("Data santri berhasil diperbarui")
+    setShowEnrollDialog(false)
+  }
+
+  function toggleStudentEnroll(studentId: string) {
+    const newSet = new Set(enrolledStudentIds)
+    if (newSet.has(studentId)) {
+      newSet.delete(studentId)
+    } else {
+      newSet.add(studentId)
+    }
+    setEnrolledStudentIds(newSet)
+  }
+
+  // Filter students for dialog
+  const filteredStudents = allStudents.filter(s =>
+    s.full_name.toLowerCase().includes(enrollSearch.toLowerCase()) ||
+    s.email.toLowerCase().includes(enrollSearch.toLowerCase())
+  )
 
   if (isLoading) return <div className="text-center py-10">Loading...</div>
 
@@ -231,9 +309,70 @@ export function AcademicStructure({ institutionId }: { institutionId: string }) 
                 <Card key={cls.id} className="p-4">
                   <p className="font-medium">{cls.name}</p>
                   <p className="text-sm text-muted-foreground">{cls.description || "No description"}</p>
+                  <div className="mt-4 flex justify-end">
+                    <Button variant="outline" size="sm" onClick={() => handleOpenEnroll(cls)}>
+                      <Users className="w-4 h-4 mr-2" />
+                      Kelola Santri
+                    </Button>
+                  </div>
                 </Card>
               ))}
             </div>
+
+            <Dialog open={showEnrollDialog} onOpenChange={setShowEnrollDialog}>
+              <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
+                <DialogHeader>
+                  <DialogTitle>Kelola Santri: {selectedClassForEnroll?.name}</DialogTitle>
+                  <DialogDescription>
+                    Pilih santri yang akan dimasukkan ke kelas ini.
+                  </DialogDescription>
+                </DialogHeader>
+
+                <div className="py-4 space-y-4 flex-1 overflow-hidden flex flex-col">
+                  <Input
+                    placeholder="Cari nama santri..."
+                    value={enrollSearch}
+                    onChange={(e) => setEnrollSearch(e.target.value)}
+                  />
+
+                  <div className="border rounded-md flex-1 overflow-y-auto p-2 space-y-2">
+                    {filteredStudents.length === 0 ? (
+                      <p className="text-center text-muted-foreground py-4">Tidak ada santri ditemukan</p>
+                    ) : (
+                      filteredStudents.map(student => (
+                        <div key={student.id} className="flex items-center space-x-3 p-2 hover:bg-muted/50 rounded">
+                          <Checkbox
+                            id={`student-${student.id}`}
+                            checked={enrolledStudentIds.has(student.id)}
+                            onCheckedChange={() => toggleStudentEnroll(student.id)}
+                          />
+                          <div className="grid gap-1.5 leading-none">
+                            <label
+                              htmlFor={`student-${student.id}`}
+                              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                            >
+                              {student.full_name}
+                            </label>
+                            <p className="text-xs text-muted-foreground">
+                              {student.email}
+                            </p>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+
+                  <div className="text-sm text-muted-foreground text-right">
+                    Total Terpilih: {enrolledStudentIds.size}
+                  </div>
+                </div>
+
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setShowEnrollDialog(false)}>Batal</Button>
+                  <Button onClick={handleSaveEnrollment}>Simpan Perubahan</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </CardContent>
         </Card>
       </TabsContent>

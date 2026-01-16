@@ -1,16 +1,16 @@
 import { createClient } from "@supabase/supabase-js";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY!;
 
 console.log("Testing Supabase Login...");
 
-if (!supabaseUrl || !supabaseAnonKey) {
+if (!supabaseUrl || !supabaseKey) {
     console.error("❌ Missing environment variables!");
     process.exit(1);
 }
 
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+const supabase = createClient(supabaseUrl, supabaseKey);
 const adminSupabase = process.env.SUPABASE_SERVICE_ROLE_KEY
     ? createClient(supabaseUrl, process.env.SUPABASE_SERVICE_ROLE_KEY)
     : null;

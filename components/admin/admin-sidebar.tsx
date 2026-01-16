@@ -2,7 +2,7 @@ import { getCurrentUserWithRole } from "@/lib/auth-utils"
 import { createClient } from "@/lib/supabase/server"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { LogOut, Users, Building2, BookOpen, FileText, Settings } from "lucide-react"
+import { LogOut, Users, Building2, BookOpen, FileText, Settings, Trophy } from "lucide-react"
 
 async function LogoutButton() {
   async function handleLogout() {
@@ -69,6 +69,13 @@ export async function AdminSidebar() {
           <Button variant="ghost" className="w-full justify-start">
             <FileText className="w-4 h-4 mr-2" />
             Evaluation Templates
+          </Button>
+        </Link>
+
+        <Link href="/admin/badges">
+          <Button variant="ghost" className="w-full justify-start">
+            <Trophy className="w-4 h-4 mr-2" />
+            Badges
           </Button>
         </Link>
 

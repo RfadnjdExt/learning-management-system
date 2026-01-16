@@ -10,7 +10,7 @@ export async function loginAction(email: string, password: string) {
   // 1️⃣ Client untuk AUTH (PAKAI ANON)
   const authClient = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY!,
     {
       cookies: {
         getAll() {
@@ -21,7 +21,7 @@ export async function loginAction(email: string, password: string) {
             cookiesToSet.forEach(({ name, value, options }) =>
               cookieStore.set(name, value, options),
             )
-          } catch {}
+          } catch { }
         },
       },
     },

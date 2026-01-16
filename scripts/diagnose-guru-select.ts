@@ -6,12 +6,12 @@ import path from "path"
 dotenv.config({ path: path.resolve(process.cwd(), ".env.local") })
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const NON_ADMIN_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY! // Simulate client
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY! // Simulate client
 
 // Use the Guru's credentials (we know their password is Guru123456!)
 async function diagnoseGuruSelect() {
     console.log("🕵️ Diagnose Guru SELECT Permissions...")
-    const supabase = createClient(SUPABASE_URL, NON_ADMIN_KEY)
+    const supabase = createClient(SUPABASE_URL, supabaseKey)
 
     // 1. Login as Guru
     const { data: { user }, error: loginError } = await supabase.auth.signInWithPassword({

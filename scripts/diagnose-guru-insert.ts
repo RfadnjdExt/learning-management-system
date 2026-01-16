@@ -6,17 +6,17 @@ import path from "path"
 dotenv.config({ path: path.resolve(process.cwd(), ".env.local") })
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY!
 
 // Valid Guru Credentials from seeding
 const GURU_EMAIL = "guru@tahfidz.test"
-const GURU_PASSWORD = "password123"
+const GURU_PASSWORD = "Guru123456!"
 
 async function diagnoseGuruInsert() {
     console.log("🕵️ Starting Guru INSERT RLS Diagnosis...")
 
     // 1. Client as Guru (Auth)
-    const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+    const client = createClient(SUPABASE_URL, supabaseKey)
 
     // Login
     const { data: authData, error: authError } = await client.auth.signInWithPassword({

@@ -7,7 +7,7 @@ dotenv.config({ path: path.resolve(process.cwd(), ".env.local") })
 
 const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY! // Use ANON key to simulate real user
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY! // Use ANON key to simulate real user
 )
 
 async function testGuruAccess() {
